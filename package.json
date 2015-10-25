@@ -1,0 +1,33 @@
+{
+  "name": "watching-very-closely",
+  "version": "1.0.0",
+  "description": "Notes who's watching very closely.",
+  "main": "index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jimkang/watching-very-closely.git"
+  },
+  "keywords": [],
+  "author": "Jim Kang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jimkang/watching-very-closely/issues"
+  },
+  "homepage": "https://github.com/jimkang/watching-very-closely",
+  "devDependencies": {
+    "tape": "^3.0.3"
+  },
+  "dependencies": {
+    "async": "^0.9.0",
+    "call-next-tick": "^1.1.2",
+    "cheerio": "^0.19.0",
+    "fetch-headlines": "^2.0.0",
+    "iscool": "^1.1.11",
+    "lodash": "^3.10.1",
+    "probable": "^1.7.0",
+    "twit": "^1.1.20"
+  }
+}
