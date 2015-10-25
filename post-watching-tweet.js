@@ -1,4 +1,4 @@
-var config = require('./configs/config');
+var config = require('./config/config');
 var callNextTick = require('call-next-tick');
 var Twit = require('twit');
 var async = require('async');
