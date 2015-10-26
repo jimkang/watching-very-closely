@@ -21,7 +21,7 @@ push-docker-image:
 
 run-docker-image:
 	docker run -v $(HOMEDIR)/config:/usr/src/app/config \
-		jkang/watching-very-closely make run-watching-very-closely
+		jkang/watching-very-closely make run
 
 run:
 	node post-watching-tweet.js
