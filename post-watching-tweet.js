@@ -6,6 +6,7 @@ var fetchHeadlines = require('fetch-headlines');
 var _ = require('lodash');
 var probable = require('probable');
 var cheerio = require('cheerio');
+var level = require('level');
 
 var keyPhrase = 'is watching closely';
 var emphasizedString = '<b>' + keyPhrase + '</b>';
@@ -13,21 +14,21 @@ var watcherRegex = /[\.!\?;] (.*)is watching closely/i;
 var htmlTagRegex = /\<\/?\w+>/g;
 var shortenedLinkLength = 23;
 
+var chosenLink;
+
 var dryRun = false;
 if (process.argv.length > 2) {
   dryRun = (process.argv[2].toLowerCase() == '--dry');
 }
 
+var db;
+
 var twit = new Twit(config.twitter);
-// var wordnok = createWordnok({
-//   apiKey: config.wordnikAPIKey,
-//   logger: {
-//     log: function noOp() {}
-//   }
-// });
 
 async.waterfall(
   [
+    openDb,
+    saveDb,
     startFetch,
     distillNewsItems,
     pickItem,
@@ -35,6 +36,18 @@ async.waterfall(
   ],
   wrapUp
 );
+
+function openDb(done) {
+  var dbOpts = {
+    valueEncoding: 'utf8'
+  };
+  level(__dirname + '/data/used-links.db', dbOpts, done);
+}
+
+function saveDb(theDB, done) {
+  db = theDB;
+  callNextTick(done);
+}
 
 function startFetch(done) {
   var fetchOpts = {
@@ -56,7 +69,6 @@ function distillNewsItems(items, done) {
       distilledItems.push(distilledItem);
     }
   }
-  debugger;
   callNextTick(done, null, _.compact(distilledItems));
 }
 
@@ -72,7 +84,25 @@ function getkeySentenceFromSummary(summary) {
 }
 
 function pickItem(items, done) {
-  callNextTick(done, null, probable.pickFromArray(items));
+  if (items.length < 1) {
+    callNextTick(done, new Error('No unused stories found.'));
+    return;
+  }
+
+  var shuffledItems = probable.shuffle(items);
+  var item = shuffledItems[0];
+  db.get(getActualNewsLink(item.link), useUnusedItem);
+
+  function useUnusedItem(error, foundLink) {
+    if (error && error.notFound) {
+      chosenLink = getActualNewsLink(item.link);
+      done(null, item);
+    }
+    else {
+      console.log(item.link, 'already used. Picking something else.');
+      callNextTick(pickItem, shuffledItems.slice(1), done);
+    }
+  }
 }
 
 function postTweet(item, done) {
@@ -101,4 +131,28 @@ function wrapUp(error, data) {
       console.log('data:', data);
     }
   }
+  else if (chosenLink) {
+    db.put(chosenLink, true, cleanUp);
+  }
+}
+
+function cleanUp(error) {
+  if (error) {
+    console.log(error);
+  }
+
+  db.close(sayOK);
+}
+
+function sayOK() {
+  console.log('OK, database closed.');
+}
+
+function getActualNewsLink(link) {
+  var actualNewsLink;
+  var parts = link.split('url=');
+  if (parts.length > 1) {
+    actualNewsLink = parts[1];
+  }
+  return actualNewsLink;
 }
