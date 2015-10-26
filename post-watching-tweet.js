@@ -109,6 +109,7 @@ function postTweet(item, done) {
   var attribution = ' ' + item.link;
 
   var text = item.keySentence.slice(0, 140 - shortenedLinkLength - 2);
+  text = text.replace(keyPhrase, keyPhrase.toUpperCase());
   text += '…' + attribution;
 
   if (dryRun) {
